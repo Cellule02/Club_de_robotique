@@ -1,0 +1,4 @@
+list_commandes = []
+
+for func in list_commandes:
+    func()
