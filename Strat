@@ -1,1 +1,124 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+
+# Dimensions de la carte
+width, height = 10, 10
+
+# Position initiale des entités carrées
+square1_pos = np.array([random.uniform(0, width), random.uniform(0, height)])
+square2_pos = np.array([random.uniform(0, width), random.uniform(0, height)])
+
+# Position de l'objectif rectangulaire
+target_pos = np.array([random.uniform(0, width), random.uniform(0, height)])
+
+# Vitesse des entités carrées
+speed = 0.1
+
+# Taille des entités
+entity_size = 0.4
+
+# Distance de circling
+circling_distance = 1.0
+
+# Liste pour stocker les trajectoires
+trajectory_square1 = [square1_pos.copy()]
+trajectory_square2 = [square2_pos.copy()]
+
+# Fonction pour prédire la position future de l'entité
+def predict_future_position(current_pos, target_pos, steps, speed):
+    direction = target_pos - current_pos
+    distance = np.linalg.norm(direction)
+    direction = direction / distance
+    future_pos = current_pos + direction * speed * steps
+    return future_pos
+
+# Fonction pour mettre à jour la position de l'entité alliée
+def update_ally_position(current_pos, target_pos, enemy_pos, avoid_distance=0.5, prediction_steps=10):
+    # Calculer la direction vers l'objectif
+    direction_to_target = target_pos - current_pos
+    distance_to_target = np.linalg.norm(direction_to_target)
+
+    # Calculer la direction vers l'ennemi
+    direction_to_enemy = enemy_pos - current_pos
+    distance_to_enemy = np.linalg.norm(direction_to_enemy)
+
+    # Calculer la direction perpendiculaire pour circling
+    perpendicular_direction = np.array([-direction_to_enemy[1], direction_to_enemy[0]])
+    perpendicular_direction /= np.linalg.norm(perpendicular_direction)
+
+    # Si l'ennemi est trop proche, ajuster la trajectoire pour circling
+    if distance_to_enemy < circling_distance:
+        new_pos = current_pos + perpendicular_direction * speed
+    else:
+        # Normaliser la direction et avancer de la vitesse définie
+        direction_to_target = direction_to_target / distance_to_target
+        new_pos = current_pos + direction_to_target * speed
+
+    return new_pos
+
+# Fonction pour mettre à jour la position de l'entité ennemie (essayer d'intercepter l'entité alliée)
+def update_enemy_position(current_pos, ally_pos, ally_target_pos, speed, prediction_steps=10):
+    # Prédire la future position de l'allié
+    predicted_ally_pos = predict_future_position(ally_pos, ally_target_pos, prediction_steps, speed)
+
+    # Se diriger vers la position prédite de l'allié pour bloquer sa trajectoire
+    direction = predicted_ally_pos - current_pos
+    distance = np.linalg.norm(direction)
+    direction = direction / distance
+    new_pos = current_pos + direction * speed
+
+    # Assurer que la position reste dans les limites de la carte
+    new_pos[0] = max(0, min(width, new_pos[0]))
+    new_pos[1] = max(0, min(height, new_pos[1]))
+
+    return new_pos
+
+# Simulation
+num_iterations = 300
+
+for i in range(num_iterations):
+    # Mettre à jour les positions
+    square1_pos = update_ally_position(square1_pos, target_pos, square2_pos)
+    square2_pos = update_enemy_position(square2_pos, square1_pos, target_pos, speed)
+
+    # Stocker les positions pour la trajectoire
+    trajectory_square1.append(square1_pos.copy())
+    trajectory_square2.append(square2_pos.copy())
+
+    # Afficher les mouvements dans la console
+    print(f"Iteration {i+1}: Square 1 at {square1_pos}, Square 2 at {square2_pos}")
+
+    # Vérifier si l'entité alliée a atteint l'objectif
+    if np.linalg.norm(square1_pos - target_pos) < 0.1:
+        print("Objectif atteint!")
+        break
+
+    # Vérifier si l'ennemi a touché l'allié
+    if np.linalg.norm(square1_pos - square2_pos) < entity_size:
+        print("L'ennemi a touché l'allié! Fin de la simulation.")
+        break
+
+    # Visualisation
+    plt.clf()
+    plt.xlim(0, width)
+    plt.ylim(0, height)
+    plt.gca().set_aspect('equal', adjustable='box')
+
+    # Dessiner les entités carrées
+    plt.gca().add_patch(plt.Rectangle(square1_pos - entity_size/2, entity_size, entity_size, color='blue'))
+    plt.gca().add_patch(plt.Rectangle(square2_pos - entity_size/2, entity_size, entity_size, color='red'))
+
+    # Dessiner l'objectif rectangulaire
+    plt.gca().add_patch(plt.Rectangle(target_pos, 0.5, 0.3, color='green'))
+
+    # Dessiner les trajectoires
+    if len(trajectory_square1) > 1:
+        plt.plot([p[0] for p in trajectory_square1], [p[1] for p in trajectory_square1], 'b-')
+    if len(trajectory_square2) > 1:
+        plt.plot([p[0] for p in trajectory_square2], [p[1] for p in trajectory_square2], 'r-')
+
+    plt.pause(0.1)
+
+plt.show()
 
