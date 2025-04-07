@@ -70,21 +70,36 @@ def draw_object(img,data):
     cv2.destroyAllWindows()
 
 def detect_gradin(img):
-    HSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
     grey = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    H,S,V = cv2.split(HSV)
-    #R,G,B = cv2.split(img)
+
     ig2= cv2.equalizeHist(grey)
+
     _,thresh = cv2.threshold(ig2,240,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)
-    kernel = np.ones((5,5),np.uint8)
+
+    kernel = np.ones((11,7),np.uint8)
+    
     thresh = cv2.dilate(thresh,kernel=kernel, iterations=1)
-    thresh = cv2.medianBlur(thresh,5)
+    thresh = cv2.medianBlur(thresh,3)
+    thresh = cv2.erode(thresh,kernel=kernel, iterations=1)
+    thresh = 255-thresh
+    contours,_ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #print(contours)
 
-    cv2.imshow("t", thresh)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    gradins = []
+    for cnt in contours:
+        # Approximate the contour
+        epsilon = 0.02 * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, epsilon, True)
+        
+        # If it has 4 points and is convex, it's likely a rectangle
+        if len(approx) == 4 and cv2.isContourConvex(approx):
+            gradins.append(contours)
+            # Draw the rectangle
+            cv2.drawContours(img, [approx], 0, (0, 255, 0), 2)
+    return gradins
 
-img = cv2.imread("camera\imgs\img_test\\test6_screenshot_20.02.2025.png")
+
+img = cv2.imread("camera\imgs\img_test\\test_screenshot_20.02.2025.png")
 detect_gradin(img)
 
 # Process the image and draw markers
