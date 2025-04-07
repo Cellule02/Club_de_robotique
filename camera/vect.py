@@ -39,10 +39,10 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 	# Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur l'image (en Pxl)
 	# Pt_Interet_Virt Position (X:int ,Y:int) du point d'interet Virtuel
 
-	Pt_QR1_Reel = (50 , 50 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
-	Pt_QR2_Reel = (250, 50 ) # Pt_QR2_Virt Position (X:int ,Y:int) du QRCODE 2 sur le terrain (en cm)
-	Pt_QR3_Reel = (50 , 150) # Pt_QR3_Virt Position (X:int ,Y:int) du QRCODE 3 sur le terrain (en cm)
-	Pt_QR4_Reel = (250, 150) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur le terrain (en cm)
+	Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
+	Pt_QR2_Reel = (240, 60 ) # Pt_QR2_Virt Position (X:int ,Y:int) du QRCODE 2 sur le terrain (en cm)
+	Pt_QR3_Reel = (60, 140) # Pt_QR3_Virt Position (X:int ,Y:int) du QRCODE 3 sur le terrain (en cm)
+	Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur le terrain (en cm)
 	U_Reel = moins(Pt_QR2_Reel, Pt_QR1_Reel)
 	V_Reel = moins(Pt_QR3_Reel, Pt_QR1_Reel)
 
@@ -53,7 +53,7 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 	##### Verification de la précision en usant le 4eme QrCode Comme Ref  #####
 	Pt_QR4_Virt_Theorique = add(add(U_Virt, V_Virt), Pt_QR1_Virt)
 	diffQR4 = dist(Pt_QR4_Virt_Theorique,Pt_QR4_Virt)
-	if diffQR4 >= 50 : # Seuil en Pxl
+	if diffQR4 >= 100 : # Seuil en Pxl #50
 		raise ValueError("Erreur trop importante ("+ str(diffQR4) +" pxl)")
 
 	print("Précision : DiffQR4 =",diffQR4,"pxl")
@@ -95,6 +95,6 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 	return (int(Pt_Interet_Reel[0]),int(Pt_Interet_Reel[1])) # avec arrondi au cm 
 
 
-Pt_robot = corrigeDeformation(QR1_Virt,QR2_Virt,QR3_Virt,QR4_Virt,QR_Robot_Virt)
+#Pt_robot = corrigeDeformation(QR1_Virt,QR2_Virt,QR3_Virt,QR4_Virt,QR_Robot_Virt)
 
-print(Pt_robot) 
+#print(Pt_robot) 
