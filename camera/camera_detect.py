@@ -143,6 +143,36 @@ def detect_gradin(img):
     return gradins, gradins_center
 
 
+def is_colision(vendengeuse, enemy, range=50):
+    dist = ((vendengeuse[0]-enemy[0])**2 + (vendengeuse[1]+enemy[1])**2)**0.5
+    if (dist < range):
+        return True
+    else:
+        return False
+    
+
+def get_bluebot(acuro_pos):
+    for key in acuro_pos.keys:
+        if (int(key) in range(51,70)):
+            return acuro_pos[key]
+        else:
+            pass
+        
+def get_yellowbot(acuro_pos):
+    for key in acuro_pos.keys:
+        if (int(key) in range(71,90)):
+            return acuro_pos[key]
+        else:
+            pass
+
+
+def get_vendengeuse(color, pos):
+    bots = [get_bluebot(pos), get_yellowbot(pos)]
+    if (color=="blue"):
+        return bots
+    else:
+        return bots[:,:,-1]
+
 """img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
 data,center = get_aruco_id(img)
 gradins, gradins_center = detect_gradin(img)
@@ -157,7 +187,7 @@ url = "/dev/video2"
 cap = cv2.VideoCapture(url)
 
 
-while True:
+"""while True:
     ret, frame = cap.read()
 
     if ret == True:
@@ -165,10 +195,10 @@ while True:
         #print(data)
         #draw_object(frame,data)
         #get_center(data[22])
-        show_img(frame5)
+        show_img(frame)
     else:
         print("pas d'img")
-        break
+        break"""
 
 
 """Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
