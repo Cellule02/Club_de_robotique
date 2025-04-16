@@ -143,31 +143,32 @@ def detect_gradin(img):
     return gradins, gradins_center
 
 
-img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
+"""img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
 data,center = get_aruco_id(img)
 gradins, gradins_center = detect_gradin(img)
 print("center",gradins_center)
 img_obgj_detect=draw_object(img, gradins)
 print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
 img_obgj_detect2=draw_object(img_obgj_detect, data)
-show_img(img_obgj_detect)
+show_img(img_obgj_detect)"""
 # Process the image and draw markers
-url = "/dev/video0"
+url = "/dev/video2"
 
-"""cap = cv2.VideoCapture(url)
+cap = cv2.VideoCapture(url)
 
 
 while True:
     ret, frame = cap.read()
 
     if ret == True:
-        data = get_aruco_id(frame)
-        print(data)
-        draw_object(frame,data)
+        #data = get_aruco_id(frame)
+        #print(data)
+        #draw_object(frame,data)
         #get_center(data[22])
+        show_img(frame5)
     else:
         print("pas d'img")
-        break"""
+        break
 
 
 """Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
