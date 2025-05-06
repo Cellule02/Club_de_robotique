@@ -1,8 +1,9 @@
-import cv2
+import cv2 as cv
 import cv2.aruco as aruco
 import time
 import numpy as np 
 import matplotlib.pyplot as plt 
+import glob
 
 from vect import corrigeDeformation
 
@@ -11,6 +12,49 @@ detectorParams = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, detectorParams)
 
 
+def calcam(img_folder):
+        # termination criteria
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((5*7,3), np.float32)
+    objp[:,:2] = np.mgrid[0:7,0:5].T.reshape(-1,2)
+    
+    # Arrays to store object points and image points from all the images.
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+    img_size = None
+
+    images = glob.glob(img_folder)
+    print(len(images))
+    for fname in images:
+        img = cv.imread(fname)
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        img_size=gray.shape[::-1]
+        # Find the chess board corners
+        ret, corners = cv.findChessboardCorners(gray, (7,5), None)
+    
+        # If found, add object points, image points (after refining them)
+        if ret == True:
+            objpoints.append(objp)
+    
+            corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+            imgpoints.append(corners2)
+            #print("\n\n",corners2)
+            # Draw and display the corners
+            cv.drawChessboardCorners(img, (7,5), corners2, ret)
+            cv.imshow('img', img)
+            cv.waitKey(500)
+    
+        cv.destroyAllWindows()
+    ### A TESTER transformer fx fy en mm 
+    """print(gray.shape)
+    print("mtx\n",mtx)
+    print("dist\n",dist)
+    print("rvecs\n",rvecs)
+    print("tvecs\n",tvecs)"""
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
+    return mtx,dist
 
 def get_center(pos):
     #print(pos)
@@ -62,29 +106,29 @@ def draw_object(img,data):
                 #print(key,"value is ", value)
                 value = value[0]
                 #print(value)
-                #cv2.circle(img,value,1,(255,0,0),2)
-                cv2.line(img, [int(i) for i in value[0]],[int(i) for i in value[1]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[2]],[int(i) for i in value[3]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[0]],[int(i) for i in value[3]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[2]],[int(i) for i in value[1]],(0,255,0),thickness=2)
+                #cv.circle(img,value,1,(255,0,0),2)
+                cv.line(img, [int(i) for i in value[0]],[int(i) for i in value[1]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[2]],[int(i) for i in value[3]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[0]],[int(i) for i in value[3]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[2]],[int(i) for i in value[1]],(0,255,0),thickness=2)
 
-                cv2.putText(img,str(key),[int(i -10) for i in value[3]],cv2.FONT_HERSHEY_COMPLEX,1,color=(0,255,0),thickness=2)
+                cv.putText(img,str(key),[int(i -10) for i in value[3]],cv.FONT_HERSHEY_COMPLEX,1,color=(0,255,0),thickness=2)
     else:
         for value in data:
                 #print("value is ", value)
-                #cv2.circle(img,value,1,(255,0,0),2)
-                cv2.line(img, [int(i) for i in value[0]],[int(i) for i in value[1]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[2]],[int(i) for i in value[3]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[0]],[int(i) for i in value[3]],(0,255,0),thickness=2)
-                cv2.line(img, [int(i) for i in value[2]],[int(i) for i in value[1]],(0,255,0),thickness=2)
+                #cv.circle(img,value,1,(255,0,0),2)
+                cv.line(img, [int(i) for i in value[0]],[int(i) for i in value[1]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[2]],[int(i) for i in value[3]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[0]],[int(i) for i in value[3]],(0,255,0),thickness=2)
+                cv.line(img, [int(i) for i in value[2]],[int(i) for i in value[1]],(0,255,0),thickness=2)
 
-                cv2.putText(img,"g",[int(i -10) for i in value[3]],cv2.FONT_HERSHEY_COMPLEX,1,color=(0,255,0),thickness=2)
+                cv.putText(img,"g",[int(i -10) for i in value[3]],cv.FONT_HERSHEY_COMPLEX,1,color=(0,255,0),thickness=2)
     return img 
 
 def show_img(img):
-    cv2.imshow("test",img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv.imshow("test",img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 def verif_gradin(gradins):
@@ -106,39 +150,39 @@ def verif_gradin(gradins):
 
         
 def detect_gradin(img):
-    grey = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    grey = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
 
-    ig2= cv2.equalizeHist(grey)
+    ig2= cv.equalizeHist(grey)
 
-    _,thresh = cv2.threshold(ig2,240,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)
+    _,thresh = cv.threshold(ig2,240,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C)
 
     kernel = np.ones((11,7),np.uint8)
     
-    thresh = cv2.dilate(thresh,kernel=kernel, iterations=1)
-    thresh = cv2.medianBlur(thresh,3)
-    thresh = cv2.erode(thresh,kernel=kernel, iterations=1)
+    thresh = cv.dilate(thresh,kernel=kernel, iterations=1)
+    thresh = cv.medianBlur(thresh,3)
+    thresh = cv.erode(thresh,kernel=kernel, iterations=1)
     thresh = 255-thresh
-    contours,_ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours,_ = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     #print(contours)
 
     gradins = [] #np.array([[305,185], [306,203], [451,109], [409,100]], dtype=np.int32)
     for cnt in contours:
         # Approximate the contour
-        epsilon = 0.02 * cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, epsilon, True)
+        epsilon = 0.02 * cv.arcLength(cnt, True)
+        approx = cv.approxPolyDP(cnt, epsilon, True)
         
         # If it has 4 points and is convex, it's likely a rectangle
-        if len(approx) == 4 and cv2.isContourConvex(approx):
+        if len(approx) == 4 and cv.isContourConvex(approx):
             gradins.append(approx[:,0])
             #print("approx",approx[:,0])
             # Draw the rectangle
-            cv2.drawContours(img, [approx], 0, (0, 255, 0), 2)
+            cv.drawContours(img, [approx], 0, (0, 255, 0), 2)
     gradins = verif_gradin(gradins)
     gradins_center = []
     for i in gradins:
         #print('i')
         gradins_center.append(get_center([i]))
-    
+    show_img(contours)
     #print("gradin",gradins)
     return gradins, gradins_center
 
@@ -152,18 +196,20 @@ def is_colision(vendengeuse, enemy, range=50):
     
 
 def get_bluebot(acuro_pos):
-    for key in acuro_pos.keys:
-        if (int(key) in range(51,70)):
-            return acuro_pos[key]
+    for key in acuro_pos.keys():
+        key = int(key)
+        if (key >=51) and (key <=70):
+            return acuro_pos[str(key)]
         else:
-            pass
+            print("erreur blue")
         
 def get_yellowbot(acuro_pos):
-    for key in acuro_pos.keys:
-        if (int(key) in range(71,90)):
-            return acuro_pos[key]
+    for key in acuro_pos.keys():
+        key=int(key)
+        if (key >=71) and (key<=90):
+            return acuro_pos[str(key)]
         else:
-            pass
+            print("erreur jaune")
 
 
 def get_vendengeuse(color, pos):
@@ -173,19 +219,30 @@ def get_vendengeuse(color, pos):
     else:
         return bots[:,:,-1]
 
-"""img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
-data,center = get_aruco_id(img)
-gradins, gradins_center = detect_gradin(img)
-print("center",gradins_center)
-img_obgj_detect=draw_object(img, gradins)
-print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
-img_obgj_detect2=draw_object(img_obgj_detect, data)
-show_img(img_obgj_detect)"""
+
+#print("notre robot ",get_vendengeuse("blue",center))
+#img_obgj_detect=draw_object(img, gradins)
+#print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
+#img_obgj_detect2=draw_object(img_obgj_detect, data)
+#show_img(img_obgj_detect)
 # Process the image and draw markers
-url = "/dev/video2"
 
-cap = cv2.VideoCapture(url)
+mtx, dist = calcam("camera/cprb1/*.jpg")
+print(mtx,dist)
+img = cv.imread('camera/imgs/test2/test_screenshot_16.04.20250.png')
+h,  w = img.shape[:2]
+newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+# undistort
+dst = cv.undistort(img, mtx, dist, None, newcameramtx)
+    
+# crop the image
+x, y, w, h = roi
+dst = dst[y:y+h, x:x+w]
+cv.imwrite('calibresult.png', dst)
+"""url = "/dev/video2"
 
+cap = cv.VideoCapture(url)
+"""
 
 """while True:
     ret, frame = cap.read()
