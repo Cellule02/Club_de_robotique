@@ -186,6 +186,22 @@ def detect_gradin(img):
     #print("gradin",gradins)
     return gradins, gradins_center
 
+def detect_gradinV2(img):
+    gray=cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    edge = cv.Canny(gray, 50,200)
+    contours =cv.findContours(edge,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)[0]
+
+    #Loop through my contours to find rectangles and put them in a list, so i can view them individually later.
+    cntrRect = []
+    for i in contours:
+            epsilon = 0.05*cv.arcLength(i,True)
+            approx = cv.approxPolyDP(i,epsilon,True)
+            x,y,w,h = cv.boundingRect(i)
+            if (len(approx) == 4): 
+                if ((h/3 > w) or (w/3 > h)):
+                    cv.drawContours(img,cntrRect,-1,(0,255,0),2)
+                    cntrRect.append(approx)
+    show_img(img)
 
 def is_colision(vendengeuse, enemy, range=50):
     dist = ((vendengeuse[0]-enemy[0])**2 + (vendengeuse[1]+enemy[1])**2)**0.5
@@ -219,6 +235,10 @@ def get_vendengeuse(color, pos):
     else:
         return bots[:,:,-1]
 
+def get_orientation(pos1, pos2):
+    x1,y2 = pos1
+    x2,y2 = pos2
+
 
 #print("notre robot ",get_vendengeuse("blue",center))
 #img_obgj_detect=draw_object(img, gradins)
@@ -227,18 +247,30 @@ def get_vendengeuse(color, pos):
 #show_img(img_obgj_detect)
 # Process the image and draw markers
 
-mtx, dist = calcam("camera/cprb1/*.jpg")
-print(mtx,dist)
-img = cv.imread('camera/imgs/test2/test_screenshot_16.04.20250.png')
+
+
+
+#mtx, dist = calcam("camera/cprb1/*.jpg")
+mtx = np.array([[466.55934433, 0, 327.07744536],
+ [0, 465.74527473,252.85468805],
+ [0, 0, 1]])
+dist = np.array([[-0.45682361, 0.31626673, 0.00050067, -0.0042928, -0.14752272]])
+
+
+#img = cv.imread('camera/imgs/test2/test_screenshot_16.04.20250.png')
+img = cv.imread("camera/imgs/img_test/test1_screenshot_20.02.2025.png", 1)
+
 h,  w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 # undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
-    
+
 # crop the image
 x, y, w, h = roi
 dst = dst[y:y+h, x:x+w]
-cv.imwrite('calibresult.png', dst)
+
+detect_gradinV2(dst)
+
 """url = "/dev/video2"
 
 cap = cv.VideoCapture(url)
