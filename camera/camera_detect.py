@@ -142,6 +142,10 @@ def detect_gradin(img):
     #print("gradin",gradins)
     return gradins, gradins_center
 
+def detect_gradinV2(img):
+    HSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+    show_img(HSV[0])
+
 
 def is_colision(vendengeuse, enemy, range=50):
     dist = ((vendengeuse[0]-enemy[0])**2 + (vendengeuse[1]+enemy[1])**2)**0.5
@@ -173,20 +177,23 @@ def get_vendengeuse(color, pos):
     else:
         return bots[:,:,-1]
 
-"""img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
+
+
+
+img = cv2.imread(r"camera\imgs\img_test\test_screenshot_20.02.2025.png")
 data,center = get_aruco_id(img)
 gradins, gradins_center = detect_gradin(img)
 print("center",gradins_center)
 img_obgj_detect=draw_object(img, gradins)
-print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
+#print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
 img_obgj_detect2=draw_object(img_obgj_detect, data)
-show_img(img_obgj_detect)"""
+show_img(img_obgj_detect)
 # Process the image and draw markers
-url = "/dev/video2"
+"""url = "/dev/video2"
 
 cap = cv2.VideoCapture(url)
 
-
+"""
 """while True:
     ret, frame = cap.read()
 
