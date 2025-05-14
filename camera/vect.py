@@ -1,4 +1,4 @@
-
+import numpy as np
 
 ############ 300 cm #############
 #                               # 2
@@ -98,3 +98,52 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 #Pt_robot = corrigeDeformation(QR1_Virt,QR2_Virt,QR3_Virt,QR4_Virt,QR_Robot_Virt)
 
 #print(Pt_robot) 
+
+def get_theta(pos1,pos2):
+    h1= np.sqrt((pos2[0]-pos1[0])**2 + (pos2[1]-pos1[1])**2)
+    d1= pos2[1]-pos1[1]
+    return np.arccos(d1/h1)
+
+def pos_rotate(origine,pos,theta):
+	C_T=np.cos(theta)
+	S_T=np.sin(theta)
+
+	Rz=np.array([[C_T,-S_T],[S_T,C_T]])
+
+	vd = np.array([[pos[0]-origine[0]],[pos[1]-origine[1]]])
+	
+	result=Rz@vd
+	result = [int(result[0]+origine[0]), int(result[1]+origine[1])]
+
+	return np.array(result).transpose()
+
+def pixel2cm(qr1,qr2,qr3,qr4,target):
+	############ 300 cm #############
+	#                               # 2
+	#        QR3          QR4       # 0
+	#                               # 0
+	#        QR1          QR2       # c
+	#(0,0)                          # m
+	#################################
+	#00
+	Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
+	Pt_QR2_Reel = (240, 60 ) # Pt_QR2_Virt Position (X:int ,Y:int) du QRCODE 2 sur le terrain (en cm)
+	Pt_QR3_Reel = (60, 140) # Pt_QR3_Virt Position (X:int ,Y:int) du QRCODE 3 sur le terrain (en cm)
+	Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur le terrain (en cm)
+
+	yp=dist(qr1,qr3)
+	ycm=80
+
+	xp=dist(qr1,qr2)
+	xcm=180
+
+	coefx=xcm/xp
+	coefy=ycm/yp
+
+	xcmtarget = Pt_QR1_Reel[0]+(target[0]-qr1[0])*coefx
+	ycmtarget = Pt_QR1_Reel[0]+(target[1]-qr1[1])*coefy
+
+	return np.array([xcmtarget,ycmtarget])
+#print(pos_rotate((0,0),(1,0),1.52))
+
+#print(get_theta((0,0),(1,0)))
