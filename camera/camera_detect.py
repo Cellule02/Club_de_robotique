@@ -294,19 +294,19 @@ img = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
 """
 
 #draw_object(img,data)
-url = "/dev/video2"
+url = "/dev/video0"
 
 cap = cv.VideoCapture(url)
 
 
 while True:
     # recuperer l'images
-    #ret, frame = cap.read()
-    ret=1
-    frame = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
+    ret, frame = cap.read()
+    #ret=1
+    #frame = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
     #print(frame.shape)
     if ret == True:
-        #detecter les arucos id
+        """#detecter les arucos id
         arucodata = get_aruco_id(frame)
 
         # on corrige les coordonnées est on trouve les centres
@@ -321,26 +321,28 @@ while True:
         theta=get_theta(arucocenter["21"][::-1],arucocenter["20"][::-1])
         #print(arucocenter)
         #print(theta, np.rad2deg(theta))
+        
+        #show_img(img)
         arucocenter_Hor={}
         for idx in arucocenter.keys():
             arucocenter_Hor[idx]=pos_rotate(arucocenter["23"],arucocenter[idx],-theta)
-        #print(arucocenter_Hor)
+        print(arucocenter_Hor)
         #print(corrigeDeformation(arucocenter_Hor["21"],arucocenter_Hor["20"],arucocenter_Hor["23"],arucocenter_Hor["22"],arucocenter_Hor["22"]))
 
-        """cv.circle(frame,arucocenter_Hor[0], 10,(255,0,0), 1)
-        cv.circle(frame,arucocenter_Hor[1], 10,(0,255,0), 1)
-        cv.circle(frame,arucocenter_Hor[2], 10,(0,0,255), 1)
-        cv.circle(frame,arucocenter_Hor[3], 10,(255,255,255), 1)
-        show_img(frame)"""
+        cv.circle(frame,arucocenter_Hor["20"], 10,(255,0,0), 1)
+        cv.circle(frame,arucocenter_Hor["21"], 10,(0,255,0), 1)
+        cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
+        cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)"""
+        show_img(frame)
         
         
-        #detecter les gradins
+        """#detecter les gradins
         gradins, imgdraw = detect_gradinV2(frame)
         gradins = np.array(gradins.reshape(-1,2),dtype=np.float32)
         #print(gradins.shape)
         #print(gradins)
         gradins_undistorted=points_undisort(gradins,mtx=MTX,dist=DIST)
-        
+        """
         # detecter notre robot
         #ally, enemi = get_vendengeuse(COLOR,arucocenter)
 
@@ -353,7 +355,7 @@ while True:
         #print(undistorted_points)
         #print(undistorted_points[1][0])
 
-        break
+        
     else:
         print("pas d'img")
         break

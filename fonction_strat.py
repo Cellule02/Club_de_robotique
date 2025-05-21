@@ -1,3 +1,33 @@
+import numpy as np
+
+# Position actuelle du robot
+pos = np.array([7.5, 5.0])
+
+# Liste des objectifs
+objectives = [
+    np.array([9.5, 5.0]),   # Objectif 1 (ex: drapeau)
+    np.array([3.0, 8.0]),   # Objectif 2
+    np.array([2.0, 2.0])    # Objectif 3
+]
+
+# Objectifs atteints ou non
+objectives_completed = [False, False, True]
+
+# Positions des ennemis
+enemy_positions = [
+    np.array([6.0, 5.5]),
+    np.array([8.0, 6.0])
+]
+
+# Coordonnées du mur
+wall_start = np.array([9.5, 3.0])
+wall_end = np.array([9.5, 7.0])
+
+# Définition des dimensions du terrain et de la marge de sécurité
+play_margin = 0.5  # marge de sécurité pour éviter les bords
+width = 10.0       # largeur du terrain
+height = 10.0      # hauteur du terrain
+
 def score_direction(pos, direction, objectives, objectives_completed, enemy_positions, wall_start, wall_end, params):
     """
     Calcule un score pour une direction donnée.
@@ -71,4 +101,12 @@ def decide_next_move(pos, objectives, objectives_completed, enemy_positions, wal
     return move, best_orientation, distance
 
 # Exemple d'utilisation dans ta boucle principale :
-# move, orientation, distance = decide_next_move(square1_pos, objectives, objectives_completed, enemy_positions, wall_start, wall_end)
+# move, orientation, distance = decide_next_move(pos, objectives, objectives_completed, enemy_positions, wall_start, wall_end)
+# Appel de la fonction
+move, orientation, distance = decide_next_move(
+    pos, objectives, objectives_completed, enemy_positions, wall_start, wall_end
+)
+
+print("Déplacement suggéré :", move)
+print("Orientation (radian) :", orientation)
+print("Distance à parcourir :", distance)
