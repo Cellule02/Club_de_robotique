@@ -72,7 +72,7 @@ def calcam(img_folder):
     print("rvecs\n",rvecs)
     print("tvecs\n",tvecs)"""
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
-    return mtx,dist
+    return mtx,dist,rvecs,tvecs
 
 def get_center(pos):
     #print(pos)
@@ -407,26 +407,16 @@ def reverse_perspective(img, mtx, rvec):
 
 while True:
     # recuperer l'images
-<<<<<<< HEAD
-    ret, frame = cap.read()
-    #ret=1
-    #frame = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
-    #print(frame.shape)
-    if ret == True:
-        """#detecter les arucos id
-        arucodata = get_aruco_id(frame)
-=======
+
     #ret, frame = cap.read()
     ret=1
     frame = cv.imread("camera/imgs/img_test/test6_screenshot_20.02.2025.png",1)#"camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
     fheight,fwidth, fchannel=frame.shape
->>>>>>> 72c9287a166c00f88d2f304efc7d1b27f1b8d6b8
 
     if ret == True:
+        #MTX, DIST, RVECS, _ = calcam("camera/calibrationV2/*.png")
         dst=img_undisort(frame, mtx=MTX, dist=DIST)
         undi_frame=reverse_perspective(dst,MTX,RVECS[0])
-
-        cv.imwrite("nodeformation.jpg", undi_frame)
 
 
         #detecter les arucos id
@@ -451,25 +441,12 @@ while True:
         print(dist(arucocenter["23"],arucocenter["22"]))
         print(dist(arucocenter["21"],arucocenter["23"]))
         print(dist(arucocenter["20"],arucocenter["22"]))
+        break
         #print(arucocenter)
         #print(arucocenter["21"][::-1],arucocenter["20"][::-1])
         """theta=get_theta(arucocenter["21"],arucocenter["20"])
         #print(arucocenter)
-<<<<<<< HEAD
-        #print(theta, np.rad2deg(theta))
-        
-        #show_img(img)
-        arucocenter_Hor={}
-        for idx in arucocenter.keys():
-            arucocenter_Hor[idx]=pos_rotate(arucocenter["23"],arucocenter[idx],-theta)
-        print(arucocenter_Hor)
-        #print(corrigeDeformation(arucocenter_Hor["21"],arucocenter_Hor["20"],arucocenter_Hor["23"],arucocenter_Hor["22"],arucocenter_Hor["22"]))
 
-        cv.circle(frame,arucocenter_Hor["20"], 10,(255,0,0), 1)
-        cv.circle(frame,arucocenter_Hor["21"], 10,(0,255,0), 1)
-        cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
-        cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)"""
-=======
         print(theta, np.rad2deg(theta))
         arucocenter_Hor={}
         for idx in arucocenter.keys():
@@ -488,7 +465,7 @@ while True:
         cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
         cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)
         cv.imwrite("rotate_z.jpg", frame)
->>>>>>> 72c9287a166c00f88d2f304efc7d1b27f1b8d6b8
+
         show_img(frame)
         
         
@@ -511,13 +488,14 @@ while True:
         #print(undistorted_points)
         #print(undistorted_points[1][0])
 
-        
+    
     else:
         print("pas d'img")
         break
 
 
-"""Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
+"""
+Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
 Pt_QR2_Reel = (240, 60 ) # Pt_QR2_Virt Position (X:int ,Y:int) du QRCODE 2 sur le terrain (en cm)
 Pt_QR3_Reel = (60, 140) # Pt_QR3_Virt Position (X:int ,Y:int) du QRCODE 3 sur le terrain (en cm)
 Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur le terrain (en cm)
@@ -537,13 +515,9 @@ Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur l
 
 
 #corrigeDeformation(QR1_Virt,QR2_Virt,QR3_Virt,QR4_Virt,QR_Robot_Virt)
+"""
 """print("coordonnée en de qr2",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["20"]))
 print("coordonnée en de q1",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["21"]))
 print("coordonnée en de q4",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["22"]))
 print("coordonnée en de q3",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["23"]))
 """
-#print("coordonnée en de q3",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["22"]))
-
-#draw_object(img=img,data=center)
-
-
