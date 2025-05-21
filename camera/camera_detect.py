@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import glob
 
-from vect import corrigeDeformation, get_theta, pos_rotate, pixel2cm
+from vect import corrigeDeformation, get_theta, rotate_z, rotate_x, dist
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 detectorParams = aruco.DetectorParameters()
@@ -15,6 +15,17 @@ MTX = np.array([[466.55934433, 0, 327.07744536],
     [0, 465.74527473,252.85468805],
     [0, 0, 1]])
 DIST = np.array([[-0.45682361, 0.31626673, 0.00050067, -0.0042928, -0.14752272]])
+RVECS=(np.array([[-0.05830831],
+       [ 0.73637161],
+       [ 3.03878495]]), np.array([[-0.06110835],
+       [ 0.7380924 ],
+       [ 3.03836588]]), np.array([[-0.06232498],
+       [ 0.72339704],
+       [ 3.01244847]]), np.array([[-0.46674298],
+       [-0.04301796],
+       [-0.05394682]]), np.array([[-4.68761857e-01],
+       [-3.07705484e-02],
+       [-6.74902523e-05]]))
 
 COLOR="blue"
 
@@ -251,7 +262,7 @@ def img_undisort(img, mtx,dist):
 
     # crop the image
     x, y, w, h = roi
-    dst = dst[y:y+h, x:x+w]
+    #dst = dst[y:y+h, x:x+w]
     return dst
 
 def points_undisort(points, mtx,dist):
@@ -273,6 +284,52 @@ def dict2array(dict):
     center_list=np.array(center_list, dtype=np.float32)
     return center_list
 
+def reverse_perspective(height,width, mtx, rvec):
+    
+    # Convertir le vecteur de rotation en matrice de rotation
+    R, _ = cv.Rodrigues(rvec)
+    
+    # Calculer la matrice de correction (inverse de la rotation)
+    R_correction = np.linalg.inv(R)
+    
+    # Construire l'homographie de base
+    H_base = mtx @ R_correction @ np.linalg.inv(mtx)
+    
+    # Définir les quatre coins de l'image originale
+    corners = np.array([
+        [0, 0],             # Coin supérieur gauche
+        [width - 1, 0],     # Coin supérieur droit
+        [width - 1, height - 1],  # Coin inférieur droit
+        [0, height - 1]     # Coin inférieur gauche
+    ], dtype=np.float32).reshape(-1, 1, 2)
+    
+    # Transformer ces coins avec l'homographie de base
+    # cv2.perspectiveTransform attend des points au format (n, 1, 2)
+    transformed_corners = cv.perspectiveTransform(corners, H_base)
+    
+    # Trouver les coordonnées minimales et maximales après transformation
+    min_x = np.min(transformed_corners[:, 0, 0])
+    min_y = np.min(transformed_corners[:, 0, 1])
+    max_x = np.max(transformed_corners[:, 0, 0])
+    max_y = np.max(transformed_corners[:, 0, 1])
+    
+    # Calculer les nouvelles dimensions
+    new_width = int(np.ceil(max_x - min_x))
+    new_height = int(np.ceil(max_y - min_y))
+    
+    # Créer une matrice de translation pour déplacer l'image dans le cadre visible
+    T = np.array([
+        [1, 0, -min_x],
+        [0, 1, -min_y],
+        [0, 0, 1]
+    ])
+    
+    # Combiner la translation avec l'homographie de base
+    H_final = T @ H_base
+    
+   
+    
+    return H_final,new_height,new_width
 
 #print("notre robot ",get_vendengeuse("blue",center))
 #img_obgj_detect=draw_object(img, gradins)
@@ -298,9 +355,59 @@ url = "/dev/video0"
 
 cap = cv.VideoCapture(url)
 
+def reverse_perspective(img, mtx, rvec):
+    # Obtenir les dimensions de l'image originale
+    height, width, _ = img.shape
+    
+    # Convertir le vecteur de rotation en matrice de rotation
+    R, _ = cv.Rodrigues(rvec)
+    
+    # Calculer la matrice de correction (inverse de la rotation)
+    R_correction = np.linalg.inv(R)
+    
+    # Construire l'homographie de base
+    H_base = mtx @ R_correction @ np.linalg.inv(mtx)
+    
+    # Définir les quatre coins de l'image originale
+    corners = np.array([
+        [0, 0],             # Coin supérieur gauche
+        [width - 1, 0],     # Coin supérieur droit
+        [width - 1, height - 1],  # Coin inférieur droit
+        [0, height - 1]     # Coin inférieur gauche
+    ], dtype=np.float32).reshape(-1, 1, 2)
+    
+    # Transformer ces coins avec l'homographie de base
+    # cv2.perspectiveTransform attend des points au format (n, 1, 2)
+    transformed_corners = cv.perspectiveTransform(corners, H_base)
+    
+    # Trouver les coordonnées minimales et maximales après transformation
+    min_x = np.min(transformed_corners[:, 0, 0])
+    min_y = np.min(transformed_corners[:, 0, 1])
+    max_x = np.max(transformed_corners[:, 0, 0])
+    max_y = np.max(transformed_corners[:, 0, 1])
+    
+    # Calculer les nouvelles dimensions
+    new_width = int(np.ceil(max_x - min_x))
+    new_height = int(np.ceil(max_y - min_y))
+    
+    # Créer une matrice de translation pour déplacer l'image dans le cadre visible
+    T = np.array([
+        [1, 0, -min_x],
+        [0, 1, -min_y],
+        [0, 0, 1]
+    ])
+    
+    # Combiner la translation avec l'homographie de base
+    H_final = T @ H_base
+    
+    # Appliquer la transformation perspective avec les nouvelles dimensions
+    result = cv.warpPerspective(img, H_final, (new_width, new_height))
+    
+    return result
 
 while True:
     # recuperer l'images
+<<<<<<< HEAD
     ret, frame = cap.read()
     #ret=1
     #frame = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
@@ -308,18 +415,47 @@ while True:
     if ret == True:
         """#detecter les arucos id
         arucodata = get_aruco_id(frame)
+=======
+    #ret, frame = cap.read()
+    ret=1
+    frame = cv.imread("camera/imgs/img_test/test6_screenshot_20.02.2025.png",1)#"camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
+    fheight,fwidth, fchannel=frame.shape
+>>>>>>> 72c9287a166c00f88d2f304efc7d1b27f1b8d6b8
 
+    if ret == True:
+        dst=img_undisort(frame, mtx=MTX, dist=DIST)
+        undi_frame=reverse_perspective(dst,MTX,RVECS[0])
+
+        cv.imwrite("nodeformation.jpg", undi_frame)
+
+
+        #detecter les arucos id
+        arucodata = get_aruco_id(undi_frame)
+        print(arucodata)
         # on corrige les coordonnées est on trouve les centres
-        aruco_undistorted={}
+        """aruco_undistorted=arucodata
         for idx in arucodata.keys():
-            aruco_undistorted[idx]=[points_undisort(i,mtx=MTX,dist=DIST) for i in arucodata[idx][0]] 
+            aruco_undistorted[idx]=[points_undisort(i,mtx=MTX,dist=DIST) for i in arucodata[idx][0]]"""
         arucocenter={}
-        for idx in aruco_undistorted.keys():
-            arucocenter[idx]=get_center(aruco_undistorted[idx])
+        for idx in arucodata.keys():
+            arucocenter[idx]=get_center(arucodata[idx])
+
+        cv.circle(undi_frame,arucocenter["20"], 1,(255,0,0), 1)
+        cv.circle(undi_frame,arucocenter["21"], 1,(0,255,0), 1)
+        cv.circle(undi_frame,arucocenter["22"], 1,(0,0,255), 1)
+        cv.circle(undi_frame,arucocenter["23"], 1,(255,255,255), 1)
+        cv.imwrite("rotate2.jpg", undi_frame)
+        show_img(undi_frame)
+
+        print(dist(arucocenter["21"],arucocenter["20"]))
+        print(dist(arucocenter["23"],arucocenter["22"]))
+        print(dist(arucocenter["21"],arucocenter["23"]))
+        print(dist(arucocenter["20"],arucocenter["22"]))
         #print(arucocenter)
         #print(arucocenter["21"][::-1],arucocenter["20"][::-1])
-        theta=get_theta(arucocenter["21"][::-1],arucocenter["20"][::-1])
+        """theta=get_theta(arucocenter["21"],arucocenter["20"])
         #print(arucocenter)
+<<<<<<< HEAD
         #print(theta, np.rad2deg(theta))
         
         #show_img(img)
@@ -333,6 +469,26 @@ while True:
         cv.circle(frame,arucocenter_Hor["21"], 10,(0,255,0), 1)
         cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
         cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)"""
+=======
+        print(theta, np.rad2deg(theta))
+        arucocenter_Hor={}
+        for idx in arucocenter.keys():
+            arucocenter_Hor[idx]=rotate_z(arucocenter["23"],arucocenter[idx],-theta)
+        for idx in arucocenter.keys():
+            arucocenter_Hor[idx]=rotate_x(arucocenter["23"],arucocenter[idx],-np.deg2rad(90))"""
+
+        print(dist(arucocenter["21"],arucocenter["20"]))
+        print(dist(arucocenter["23"],arucocenter["22"]))
+        print(dist(arucocenter["21"],arucocenter["23"]))
+        print(dist(arucocenter["20"],arucocenter["22"]))
+        print(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],arucocenter["22"]))
+
+        """cv.circle(frame,arucocenter_Hor["20"], 10,(255,0,0), 1)
+        cv.circle(frame,arucocenter_Hor["21"], 10,(0,255,0), 1)
+        cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
+        cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)
+        cv.imwrite("rotate_z.jpg", frame)
+>>>>>>> 72c9287a166c00f88d2f304efc7d1b27f1b8d6b8
         show_img(frame)
         
         
