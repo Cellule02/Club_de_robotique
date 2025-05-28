@@ -28,7 +28,7 @@ def moins(X,Y):
 def mul(r,X):
 	return (X[0]*r, X[1]*r)
 
-def dist(X,Y):
+def f_dist(X,Y):
 	return int(((X[0]-Y[0])**2 + (X[1]-Y[1])**2 ) **0.5)
 
 
@@ -52,7 +52,7 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 	###########################################################################
 	##### Verification de la précision en usant le 4eme QrCode Comme Ref  #####
 	Pt_QR4_Virt_Theorique = add(add(U_Virt, V_Virt), Pt_QR1_Virt)
-	diffQR4 = dist(Pt_QR4_Virt_Theorique,Pt_QR4_Virt)
+	diffQR4 = f_dist(Pt_QR4_Virt_Theorique,Pt_QR4_Virt)
 	if diffQR4 >= 100 : # Seuil en Pxl #50
 		raise ValueError("Erreur trop importante ("+ str(diffQR4) +" pxl)")
 

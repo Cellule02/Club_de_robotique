@@ -4,14 +4,14 @@ import time
 import numpy as np 
 import matplotlib.pyplot as plt 
 import glob
-
-from vect import corrigeDeformation, get_theta, rotate_z, rotate_x, dist
+import socket
+from vect import corrigeDeformation, get_theta, rotate_z, rotate_x, f_dist
 
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 detectorParams = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, detectorParams)
 
-MTX = np.array([[466.55934433, 0, 327.07744536],
+"""MTX = np.array([[466.55934433, 0, 327.07744536],
     [0, 465.74527473,252.85468805],
     [0, 0, 1]])
 DIST = np.array([[-0.45682361, 0.31626673, 0.00050067, -0.0042928, -0.14752272]])
@@ -25,8 +25,8 @@ RVECS=(np.array([[-0.05830831],
        [-0.04301796],
        [-0.05394682]]), np.array([[-4.68761857e-01],
        [-3.07705484e-02],
-       [-6.74902523e-05]]))
-
+       [-6.74902523e-05]]))"""
+CALSTART = False
 COLOR="blue"
 
 
@@ -74,6 +74,20 @@ def calcam(img_folder):
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
     return mtx,dist,rvecs,tvecs
 
+def save_param(file_path):
+    mtx, dist, rvecs,tvecs = calcam(file_path)
+    with open("camera/spec.txt", "+w") as file:
+        data={'mtx':mtx, 'dist':dist, 'rvecs':rvecs, 'tvecs':tvecs}
+        file.write(str(data))
+
+def load_param():
+    with open("camera/spec.txt", "r") as file:
+        spec = file.read()
+        spec = spec.replace('array', 'np.array')
+        spec  =  eval(spec, {"np": np})
+        print(spec.keys())
+    return spec["mtx"], spec["dist"], spec["rvecs"], spec["tvecs"]
+
 def get_center(pos):
     #print(pos)
     pos = pos[0]
@@ -101,7 +115,6 @@ def eq_xy(qr_center):
     }
     return mean_align_center
 
-
 def get_aruco_id(img, detect=detector):
     try:
         data = {}
@@ -113,7 +126,6 @@ def get_aruco_id(img, detect=detector):
         return data
     except AttributeError as e:
         print(e)
-
 
 def draw_object(img,data):
 
@@ -146,7 +158,6 @@ def show_img(img):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-
 def verif_gradin(gradins):
     true_gradins = []
     for gradin in gradins:
@@ -163,8 +174,7 @@ def verif_gradin(gradins):
             true_gradins.append(gradin)
             print("trouvé")
     return true_gradins
-
-        
+ 
 def detect_gradin(img):
     grey = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
 
@@ -217,8 +227,7 @@ def detect_gradinV2(img):
                 if ((h/3 > w) or (w/3 > h)) and (h*w > 200) and (x>0) and (y>0):
                     cv.drawContours(img,approx,-1,(0,255,0),2)
                     cntrRect.append(approx)
-    return np.array(cntrRect), img
-
+    return cntrRect, img
 
 def is_colision(vendengeuse, enemy, range=50):
     dist = ((vendengeuse[0]-enemy[0])**2 + (vendengeuse[1]+enemy[1])**2)**0.5
@@ -227,7 +236,6 @@ def is_colision(vendengeuse, enemy, range=50):
     else:
         return False
     
-
 def get_bluebot(acuro_pos):
     for key in acuro_pos.keys():
         key = int(key)
@@ -244,14 +252,12 @@ def get_yellowbot(acuro_pos):
         else:
             print("erreur jaune")
 
-
 def get_vendengeuse(color, pos):
     bots = [get_bluebot(pos), get_yellowbot(pos)]
     if (color=="blue"):
         return bots
     else:
         return bots[:,:,-1]
-
 
 def img_undisort(img, mtx,dist):
     
@@ -283,77 +289,6 @@ def dict2array(dict):
         center_list.append(dict[key])
     center_list=np.array(center_list, dtype=np.float32)
     return center_list
-
-def reverse_perspective(height,width, mtx, rvec):
-    
-    # Convertir le vecteur de rotation en matrice de rotation
-    R, _ = cv.Rodrigues(rvec)
-    
-    # Calculer la matrice de correction (inverse de la rotation)
-    R_correction = np.linalg.inv(R)
-    
-    # Construire l'homographie de base
-    H_base = mtx @ R_correction @ np.linalg.inv(mtx)
-    
-    # Définir les quatre coins de l'image originale
-    corners = np.array([
-        [0, 0],             # Coin supérieur gauche
-        [width - 1, 0],     # Coin supérieur droit
-        [width - 1, height - 1],  # Coin inférieur droit
-        [0, height - 1]     # Coin inférieur gauche
-    ], dtype=np.float32).reshape(-1, 1, 2)
-    
-    # Transformer ces coins avec l'homographie de base
-    # cv2.perspectiveTransform attend des points au format (n, 1, 2)
-    transformed_corners = cv.perspectiveTransform(corners, H_base)
-    
-    # Trouver les coordonnées minimales et maximales après transformation
-    min_x = np.min(transformed_corners[:, 0, 0])
-    min_y = np.min(transformed_corners[:, 0, 1])
-    max_x = np.max(transformed_corners[:, 0, 0])
-    max_y = np.max(transformed_corners[:, 0, 1])
-    
-    # Calculer les nouvelles dimensions
-    new_width = int(np.ceil(max_x - min_x))
-    new_height = int(np.ceil(max_y - min_y))
-    
-    # Créer une matrice de translation pour déplacer l'image dans le cadre visible
-    T = np.array([
-        [1, 0, -min_x],
-        [0, 1, -min_y],
-        [0, 0, 1]
-    ])
-    
-    # Combiner la translation avec l'homographie de base
-    H_final = T @ H_base
-    
-   
-    
-    return H_final,new_height,new_width
-
-#print("notre robot ",get_vendengeuse("blue",center))
-#img_obgj_detect=draw_object(img, gradins)
-#print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
-#img_obgj_detect2=draw_object(img_obgj_detect, data)
-#show_img(img_obgj_detect)
-# Process the image and draw markers
-
-
-#mtx, dist = calcam("camera/cprb1/*.jpg")
-
-
-#img = cv.imread('camera/imgs/test2/test_screenshot_16.04.20250.png')
-"""img = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
-
-dst=img_undisort(img, mtx=MTX, dist=DIST)
-
-img = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
-"""
-
-#draw_object(img,data)
-url = "/dev/video0"
-
-cap = cv.VideoCapture(url)
 
 def reverse_perspective(img, mtx, rvec):
     # Obtenir les dimensions de l'image originale
@@ -405,23 +340,60 @@ def reverse_perspective(img, mtx, rvec):
     
     return result
 
+def send_data(addrip,data):
+    import socket
+    socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = addrip
+    port = 5005
+    serverAddress = (ip, port)
+    socket.connect(serverAddress)
+    message = data.encode()
+    socket.send(message)
+
+#print("notre robot ",get_vendengeuse("blue",center))
+#img_obgj_detect=draw_object(img, gradins)
+#print(corrigeDeformation(center["21"],center["20"],center["23"],center["22"],gradins_center[0]))
+#img_obgj_detect2=draw_object(img_obgj_detect, data)
+#show_img(img_obgj_detect)
+# Process the image and draw markers
+
+
+#mtx, dist = calcam("camera/cprb1/*.jpg")
+
+
+#img = cv.imread('camera/imgs/test2/test_screenshot_16.04.20250.png')
+"""img = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
+
+dst=img_undisort(img, mtx=MTX, dist=DIST)
+
+img = cv.imread("camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
+"""
+
+#draw_object(img,data)
+url = "/dev/video0"
+
+cap = cv.VideoCapture(url)
+
+
 while True:
     # recuperer l'images
 
     #ret, frame = cap.read()
     ret=1
-    frame = cv.imread("camera/imgs/img_test/test6_screenshot_20.02.2025.png",1)#"camera/imgs/img_test/test_screenshot_20.02.2025.png", 1)
+    frame = cv.imread("camera/imgs/test2/test_screenshot_16.04.20250.png", 1)
     fheight,fwidth, fchannel=frame.shape
+    if CALSTART==True:
+        save_param("camera/cprb2 /*.jpg")
 
     if ret == True:
-        #MTX, DIST, RVECS, _ = calcam("camera/calibrationV2/*.png")
+        MTX, DIST, RVECS, _ = load_param()
         dst=img_undisort(frame, mtx=MTX, dist=DIST)
         undi_frame=reverse_perspective(dst,MTX,RVECS[0])
-
+        #show_img(undi_frame)
 
         #detecter les arucos id
         arucodata = get_aruco_id(undi_frame)
-        print(arucodata)
+        #print(arucodata)
         # on corrige les coordonnées est on trouve les centres
         """aruco_undistorted=arucodata
         for idx in arucodata.keys():
@@ -430,76 +402,83 @@ while True:
         for idx in arucodata.keys():
             arucocenter[idx]=get_center(arucodata[idx])
 
-        cv.circle(undi_frame,arucocenter["20"], 1,(255,0,0), 1)
-        cv.circle(undi_frame,arucocenter["21"], 1,(0,255,0), 1)
-        cv.circle(undi_frame,arucocenter["22"], 1,(0,0,255), 1)
-        cv.circle(undi_frame,arucocenter["23"], 1,(255,255,255), 1)
+        cv.circle(undi_frame,arucocenter["20"], 1,(255,0,0), 10)
+        cv.circle(undi_frame,arucocenter["21"], 1,(0,255,0), 10)
+        cv.circle(undi_frame,arucocenter["22"], 1,(0,0,255), 10)
+        cv.circle(undi_frame,arucocenter["23"], 1,(255,255,255), 10)
         cv.imwrite("rotate2.jpg", undi_frame)
-        show_img(undi_frame)
+        #show_img(undi_frame)
 
-        print(dist(arucocenter["21"],arucocenter["20"]))
-        print(dist(arucocenter["23"],arucocenter["22"]))
-        print(dist(arucocenter["21"],arucocenter["23"]))
-        print(dist(arucocenter["20"],arucocenter["22"]))
-        break
+        #print(f_dist(arucocenter["21"],arucocenter["20"]))
+        #print(f_dist(arucocenter["23"],arucocenter["22"]))
+        #print(f_dist(arucocenter["21"],arucocenter["23"]))
+        #print(f_dist(arucocenter["20"],arucocenter["22"]))
+        
         #print(arucocenter)
         #print(arucocenter["21"][::-1],arucocenter["20"][::-1])
-        """theta=get_theta(arucocenter["21"],arucocenter["20"])
+        #theta=get_theta(arucocenter["21"],arucocenter["20"])
         #print(arucocenter)
 
-        print(theta, np.rad2deg(theta))
-        arucocenter_Hor={}
-        for idx in arucocenter.keys():
-            arucocenter_Hor[idx]=rotate_z(arucocenter["23"],arucocenter[idx],-theta)
-        for idx in arucocenter.keys():
-            arucocenter_Hor[idx]=rotate_x(arucocenter["23"],arucocenter[idx],-np.deg2rad(90))"""
-
-        print(dist(arucocenter["21"],arucocenter["20"]))
-        print(dist(arucocenter["23"],arucocenter["22"]))
-        print(dist(arucocenter["21"],arucocenter["23"]))
-        print(dist(arucocenter["20"],arucocenter["22"]))
-        print(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],arucocenter["22"]))
-
-        """cv.circle(frame,arucocenter_Hor["20"], 10,(255,0,0), 1)
-        cv.circle(frame,arucocenter_Hor["21"], 10,(0,255,0), 1)
-        cv.circle(frame,arucocenter_Hor["22"], 10,(0,0,255), 1)
-        cv.circle(frame,arucocenter_Hor["23"], 10,(255,255,255), 1)
-        cv.imwrite("rotate_z.jpg", frame)
-
-        show_img(frame)
+        #print(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],arucocenter["22"]))
         
         
-        """#detecter les gradins
-        gradins, imgdraw = detect_gradinV2(frame)
-        gradins = np.array(gradins.reshape(-1,2),dtype=np.float32)
-        #print(gradins.shape)
-        #print(gradins)
-        gradins_undistorted=points_undisort(gradins,mtx=MTX,dist=DIST)
-        """
+        #detecter les gradins
+        gradins, imgdraw = detect_gradinV2(undi_frame)
+        print(len(gradins))
+        print(gradins[0][0][0])
+        cv.circle(undi_frame,gradins[0][0][0], 1,(255,255,255), 10)
+        cv.circle(undi_frame,gradins[0][1][0], 1,(255,255,255), 10)
+        cv.circle(undi_frame,gradins[0][2][0], 1,(255,255,255), 10)
+        cv.circle(undi_frame,gradins[0][3][0], 1,(255,255,255), 10)
+
+        #show_img(undi_frame)
+        true_gradin_corner= []
+        true_gradin_center=[]
+        for gradin in gradins:
+            t = []
+            for corner in gradin[:,0]:
+                t.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],corner))
+            true_gradin_center.append(get_center([t]))
+            true_gradin_corner.append(t)
+        
+        
+        
         # detecter notre robot
-        #ally, enemi = get_vendengeuse(COLOR,arucocenter)
+        ally, enemi = get_vendengeuse(COLOR,arucocenter)
+        ally=arucodata["22"]
+        enemi = arucodata["21"]
+        true_ally_corner = []
+        for acorner in ally[0]:
+            true_ally_corner.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],acorner))
 
+        true_enemy_corner= []
+        for ecorner in enemi[0]:
+            true_enemy_corner.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],ecorner))
+            
+        print(true_ally_corner)
+        print(true_enemy_corner)
+        true_ally_center = get_center([true_ally_corner])
+        true_enemy_center = get_center([true_enemy_corner])
         
+        data = {
+            "ally_center": true_ally_center,
+            "enemy_center": true_enemy_center,
+            "gradins_center": true_gradin_center,
+            "ally_corner": true_ally_corner,
+            "enemy_corner": true_enemy_corner,
+            "gradins_corner": true_gradin_corner,
 
-        #theta=get_theta(undistorted_points[1],undistorted_points[0])
-        #horizontal_pos=pos_rotate(undistorted_points[1],undistorted_points,-theta)
+        }
 
-        #print(center)
-        #print(undistorted_points)
-        #print(undistorted_points[1][0])
+        send_data("0.0.0.0", data)
 
-    
+        break
     else:
         print("pas d'img")
         break
 
 
-"""
-Pt_QR1_Reel = (60 , 60 ) # Pt_QR1_Virt Position (X:int ,Y:int) du QRCODE 1 sur le terrain (en cm)
-Pt_QR2_Reel = (240, 60 ) # Pt_QR2_Virt Position (X:int ,Y:int) du QRCODE 2 sur le terrain (en cm)
-Pt_QR3_Reel = (60, 140) # Pt_QR3_Virt Position (X:int ,Y:int) du QRCODE 3 sur le terrain (en cm)
-Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur le terrain (en cm)
-"""
+
 ############ 300 cm #############
 #                               # 2
 #        QR3          QR4       # 0
@@ -515,7 +494,7 @@ Pt_QR4_Reel = (240, 140) # Pt_QR4_Virt Position (X:int ,Y:int) du QRCODE 4 sur l
 
 
 #corrigeDeformation(QR1_Virt,QR2_Virt,QR3_Virt,QR4_Virt,QR_Robot_Virt)
-"""
+
 """print("coordonnée en de qr2",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["20"]))
 print("coordonnée en de q1",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["21"]))
 print("coordonnée en de q4",corrigeDeformation(center["21"],center["20"],center["23"],center["22"],center["22"]))
