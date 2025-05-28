@@ -44,7 +44,7 @@ def calcam(img_folder):
     img_size = None
 
     images = glob.glob(img_folder)
-    print(len(images))
+    #print(len(images))
     for fname in images:
         img = cv.imread(fname)
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -85,7 +85,7 @@ def load_param():
         spec = file.read()
         spec = spec.replace('array', 'np.array')
         spec  =  eval(spec, {"np": np})
-        print(spec.keys())
+        #print(spec.keys())
     return spec["mtx"], spec["dist"], spec["rvecs"], spec["tvecs"]
 
 def get_center(pos):
@@ -172,7 +172,7 @@ def verif_gradin(gradins):
 
         if (distx/disty >= 2) or (disty/distx >=2):
             true_gradins.append(gradin)
-            print("trouvé")
+            #print("trouvé")
     return true_gradins
  
 def detect_gradin(img):
@@ -208,7 +208,7 @@ def detect_gradin(img):
     for i in gradins:
         #print('i')
         gradins_center.append(get_center([i]))
-    show_img(contours)
+    #show_img(contours)
     #print("gradin",gradins)
     return gradins, gradins_center
 
@@ -242,7 +242,8 @@ def get_bluebot(acuro_pos):
         if (key >=51) and (key <=70):
             return acuro_pos[str(key)]
         else:
-            print("erreur blue")
+            #print("erreur blue")
+            return 0
         
 def get_yellowbot(acuro_pos):
     for key in acuro_pos.keys():
@@ -250,7 +251,8 @@ def get_yellowbot(acuro_pos):
         if (key >=71) and (key<=90):
             return acuro_pos[str(key)]
         else:
-            print("erreur jaune")
+            #print("erreur jaune")
+            return 0 
 
 def get_vendengeuse(color, pos):
     bots = [get_bluebot(pos), get_yellowbot(pos)]
@@ -377,7 +379,7 @@ cap = cv.VideoCapture(url)
 
 while True:
     # recuperer l'images
-
+    #start = time.time()
     #ret, frame = cap.read()
     ret=1
     frame = cv.imread("camera/imgs/test2/test_screenshot_16.04.20250.png", 1)
@@ -402,47 +404,6 @@ while True:
         for idx in arucodata.keys():
             arucocenter[idx]=get_center(arucodata[idx])
 
-        cv.circle(undi_frame,arucocenter["20"], 1,(255,0,0), 10)
-        cv.circle(undi_frame,arucocenter["21"], 1,(0,255,0), 10)
-        cv.circle(undi_frame,arucocenter["22"], 1,(0,0,255), 10)
-        cv.circle(undi_frame,arucocenter["23"], 1,(255,255,255), 10)
-        cv.imwrite("rotate2.jpg", undi_frame)
-        #show_img(undi_frame)
-
-        #print(f_dist(arucocenter["21"],arucocenter["20"]))
-        #print(f_dist(arucocenter["23"],arucocenter["22"]))
-        #print(f_dist(arucocenter["21"],arucocenter["23"]))
-        #print(f_dist(arucocenter["20"],arucocenter["22"]))
-        
-        #print(arucocenter)
-        #print(arucocenter["21"][::-1],arucocenter["20"][::-1])
-        #theta=get_theta(arucocenter["21"],arucocenter["20"])
-        #print(arucocenter)
-
-        #print(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],arucocenter["22"]))
-        
-        
-        #detecter les gradins
-        gradins, imgdraw = detect_gradinV2(undi_frame)
-        print(len(gradins))
-        print(gradins[0][0][0])
-        cv.circle(undi_frame,gradins[0][0][0], 1,(255,255,255), 10)
-        cv.circle(undi_frame,gradins[0][1][0], 1,(255,255,255), 10)
-        cv.circle(undi_frame,gradins[0][2][0], 1,(255,255,255), 10)
-        cv.circle(undi_frame,gradins[0][3][0], 1,(255,255,255), 10)
-
-        #show_img(undi_frame)
-        true_gradin_corner= []
-        true_gradin_center=[]
-        for gradin in gradins:
-            t = []
-            for corner in gradin[:,0]:
-                t.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],corner))
-            true_gradin_center.append(get_center([t]))
-            true_gradin_corner.append(t)
-        
-        
-        
         # detecter notre robot
         ally, enemi = get_vendengeuse(COLOR,arucocenter)
         ally=arucodata["22"]
@@ -455,24 +416,64 @@ while True:
         for ecorner in enemi[0]:
             true_enemy_corner.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],ecorner))
             
-        print(true_ally_corner)
-        print(true_enemy_corner)
+        #print(true_ally_corner)
+        #print(true_enemy_corner)
         true_ally_center = get_center([true_ally_corner])
         true_enemy_center = get_center([true_enemy_corner])
+
+        if is_colision(true_ally_center,true_enemy_center,100) ==False:
         
-        data = {
-            "ally_center": true_ally_center,
-            "enemy_center": true_enemy_center,
-            "gradins_center": true_gradin_center,
-            "ally_corner": true_ally_corner,
-            "enemy_corner": true_enemy_corner,
-            "gradins_corner": true_gradin_corner,
 
-        }
+            #detecter les gradins
+            gradins, imgdraw = detect_gradinV2(undi_frame)
+            #print(len(gradins))
+            #print(gradins[0][0][0])
+            cv.circle(undi_frame,gradins[0][0][0], 1,(255,255,255), 10)
+            cv.circle(undi_frame,gradins[0][1][0], 1,(255,255,255), 10)
+            cv.circle(undi_frame,gradins[0][2][0], 1,(255,255,255), 10)
+            cv.circle(undi_frame,gradins[0][3][0], 1,(255,255,255), 10)
 
-        send_data("0.0.0.0", data)
+            #show_img(undi_frame)
+            true_gradin_corner= []
+            true_gradin_center=[]
+            for gradin in gradins:
+                t = []
+                for corner in gradin[:,0]:
+                    t.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],corner))
+                true_gradin_center.append(get_center([t]))
+                true_gradin_corner.append(t)
+            
+            
+            
+            
+            
+            data = {
+                "ally_center": true_ally_center,
+                "enemy_center": true_enemy_center,
+                "gradins_center": true_gradin_center,
+                "ally_corner": true_ally_corner,
+                "enemy_corner": true_enemy_corner,
+                "gradins_corner": true_gradin_corner,
+                "collision":False,
 
-        break
+            }
+            #send_data("0.0.0.0", data)
+        else:
+            data = {
+                "ally_center": true_ally_center,
+                "enemy_center": true_enemy_center,
+                "gradins_center": None,
+                "ally_corner": true_ally_corner,
+                "enemy_corner": true_enemy_corner,
+                "gradins_corner": None,
+                "collision":True,
+
+            }
+            #send_data("0.0.0.0", data)
+
+        print(data)
+        #print(time.time()-start)
+        #break
     else:
         print("pas d'img")
         break
