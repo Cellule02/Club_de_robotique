@@ -156,4 +156,10 @@ class Vendangeuse():
         time.sleep(5)
         self.move(V,V,V,V)
         time.sleep(5)
-        
+
+
+
+robot = Vendangeuse()
+while True:
+    robot.on_start()
+    robot.show_flag()
