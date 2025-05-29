@@ -96,10 +96,13 @@ def corrigeDeformation(Pt_QR1_Virt,Pt_QR2_Virt,Pt_QR3_Virt,Pt_QR4_Virt,Pt_Intere
 
 
 
-def get_theta(pos1,pos2):
-    h1= np.sqrt((pos2[0]-pos1[0])**2 + (pos2[1]-pos1[1])**2)
-    d1= pos2[0]-pos1[0]
-    return np.arccos(d1/h1)
+def get_theta(origine,pos2,vh):
+	h1= np.sqrt((pos2[0]-origine[0])**2 + (pos2[1]-origine[1])**2)
+	d1= pos2[0]-origine[0]
+	if vh=="v":
+		return np.arccos(d1/h1)
+	if vh == "h":
+		return np.arcsin(d1/h1) + np.pi/2
 
 def rotate_z(origine,pos,theta):
 	C_T=np.cos(theta)

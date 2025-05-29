@@ -6,7 +6,7 @@ class RaspblockNavigator:
     def __init__(self):
         # Constantes physiques du Raspblock
         self.WHEEL_RADIUS = 0.0325  # Rayon des roues en mètres
-        self.WHEEL_BASE = 0.134     # Distance entre les roues en mètres
+        self.WHEEL_BASE = 0.21     # Distance entre les roues en mètres
         self.MAX_SPEED = 0.5        # Vitesse maximale en m/s
         self.MIN_SPEED = 0.1        # Vitesse minimale en m/s
         
@@ -198,6 +198,7 @@ def control_raspblock(strategic_move, timeout=30.0, precision=0.01):
             try:
                 # Envoi des commandes aux moteurs
                 # raspblock.set_motor_speeds(v_left, v_right)
+                print('raspblock.set_moto_speed(',v_left,v_right,')')
                 pass  # À remplacer par l'appel réel aux moteurs
             except Exception as motor_error:
                 print(f"Erreur moteurs: {motor_error}")
@@ -247,3 +248,5 @@ def control_raspblock(strategic_move, timeout=30.0, precision=0.01):
         state['final_orientation'] = navigator.current_orientation
         
         return state
+
+control_raspblock([[0,0],0,1,0], timeout=30.0, precision=0.01)

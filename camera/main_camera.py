@@ -420,6 +420,8 @@ while True:
         #print(true_enemy_corner)
         true_ally_center = get_center([true_ally_corner])
         true_enemy_center = get_center([true_enemy_corner])
+        print("fisrt corner", true_ally_corner[0])
+        gradin_orientation = [get_theta(true_ally_center, gradin_center) for gradin_center in true_gradin_center]
 
         if is_colision(true_ally_center,true_enemy_center,100) ==False:
         
@@ -454,10 +456,11 @@ while True:
                 "ally_corner": true_ally_corner,
                 "enemy_corner": true_enemy_corner,
                 "gradins_corner": true_gradin_corner,
+                "gradin_orientation": gradin_orientation,
                 "collision":False,
 
             }
-            #send_data("0.0.0.0", data)
+            send_data("0.0.0.0", data)
         else:
             data = {
                 "ally_center": true_ally_center,
@@ -466,10 +469,11 @@ while True:
                 "ally_corner": true_ally_corner,
                 "enemy_corner": true_enemy_corner,
                 "gradins_corner": None,
+                "gradin_orientation": None,
                 "collision":True,
 
             }
-            #send_data("0.0.0.0", data)
+            send_data("0.0.0.0", data)
 
         print(data)
         #print(time.time()-start)
