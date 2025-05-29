@@ -28,6 +28,10 @@ RVECS=(np.array([[-0.05830831],
        [-6.74902523e-05]]))"""
 CALSTART = False
 COLOR="blue"
+INIT=True
+
+Q1_ref,Q2_ref,Q3_ref,Q4_ref=[(0,0) for i in range(4)]
+
 
 
 def calcam(img_folder):
@@ -239,7 +243,7 @@ def is_colision(vendengeuse, enemy, range=50):
 def get_bluebot(acuro_pos):
     for key in acuro_pos.keys():
         key = int(key)
-        if (key >=51) and (key <=70):
+        if (key >=1) and (key <=5):
             return acuro_pos[str(key)]
         else:
             #print("erreur blue")
@@ -248,7 +252,7 @@ def get_bluebot(acuro_pos):
 def get_yellowbot(acuro_pos):
     for key in acuro_pos.keys():
         key=int(key)
-        if (key >=71) and (key<=90):
+        if (key >=6) and (key<=10):
             return acuro_pos[str(key)]
         else:
             #print("erreur jaune")
@@ -404,25 +408,27 @@ while True:
         for idx in arucodata.keys():
             arucocenter[idx]=get_center(arucodata[idx])
 
+        if INIT==True:
+            Q1_ref,Q2_ref,Q3_ref,Q4_ref = arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"]
+            INIT=False
+
         # detecter notre robot
         ally, enemi = get_vendengeuse(COLOR,arucocenter)
         ally=arucodata["22"]
         enemi = arucodata["21"]
         true_ally_corner = []
         for acorner in ally[0]:
-            true_ally_corner.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],acorner))
+            true_ally_corner.append(corrigeDeformation(Q1_ref,Q2_ref,Q3_ref,Q4_ref,acorner))
 
         true_enemy_corner= []
         for ecorner in enemi[0]:
-            true_enemy_corner.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],ecorner))
+            true_enemy_corner.append(corrigeDeformation(Q1_ref,Q2_ref,Q3_ref,Q4_ref,ecorner))
             
         #print(true_ally_corner)
         #print(true_enemy_corner)
         true_ally_center = get_center([true_ally_corner])
         true_enemy_center = get_center([true_enemy_corner])
-        print("fisrt corner", true_ally_corner[0])
-        gradin_orientation = [get_theta(true_ally_center, gradin_center) for gradin_center in true_gradin_center]
-
+       
         if is_colision(true_ally_center,true_enemy_center,100) ==False:
         
 
@@ -441,13 +447,12 @@ while True:
             for gradin in gradins:
                 t = []
                 for corner in gradin[:,0]:
-                    t.append(corrigeDeformation(arucocenter["21"],arucocenter["20"],arucocenter["23"],arucocenter["22"],corner))
+                    t.append(corrigeDeformation(Q1_ref,Q2_ref,Q3_ref,Q4_ref,corner))
                 true_gradin_center.append(get_center([t]))
                 true_gradin_corner.append(t)
             
-            
-            
-            
+            gradin_orientation = [get_theta(true_ally_center, gradin_center,"h") for gradin_center in true_gradin_center]
+
             
             data = {
                 "ally_center": true_ally_center,

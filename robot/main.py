@@ -18,6 +18,7 @@ class Vendangeuse():
         #PIN
         self.MAGNET=19
         self.START=13
+        self.PAMI=6
 
         # robot
         self.ROBOT=Raspblock()
@@ -43,9 +44,11 @@ class Vendangeuse():
         GPIO.setup(self.START, GPIO.IN)
         self.control_magnet(0) # on desactive l'aimant
         self.show_score(0) # on affiche un score de 0 
+        self.control_pami(0)
         while self.orientation_h==None:
             self.orientation_h=self.get_orientation()
             time.sleep(0.1)
+        
 
 
     def cam_data(self):
@@ -94,6 +97,16 @@ class Vendangeuse():
             GPIO.output(self.MAGNET, GPIO.LOW)
         else:
             print(f"Warning: code not valid, must be 1 or 0 not {activate}")
+    
+    def control_pami(self,activate):
+        if activate==0:
+            GPIO.output(self.PAMI,GPIO.Low)
+        elif activate==1:
+            GPIO.output(self.PAMI, GPIO.HIGH)
+        else:
+            print(f"Warning: code not valid, must be 1 or 0 not {activate}")
+    
+
 
     def get_orientation(self):
         ori=self.get_board_info(8)
@@ -126,7 +139,7 @@ class Vendangeuse():
         start = 1
         while start:
             start = GPIO.input(self.START)
-        return not start
+        return time.time()
 
     def move(self, HG,BG, HD,BD):
         self.ROBOT.Speed_Wheel_control(HD,BD,BG,HG)
@@ -149,17 +162,30 @@ class Vendangeuse():
     def close_connection(self):
         del self.ROBOT
 
-    
-    def show_flag(self):
-        V = 2*self.SPEED
-        self.move(-V,-V,-V,-V)
-        time.sleep(5)
-        self.move(V,V,V,V)
-        time.sleep(5)
 
 
 
-robot = Vendangeuse()
-while True:
-    robot.on_start()
-    robot.show_flag()
+"""robot = Vendangeuse()
+V=2
+
+start = robot.on_start()
+print("start")
+while time.time()-start<100:
+    for i in range(5000):
+        robot.move(V,V,V,V)
+        time.sleep(0.001)
+    for i in range(5000):
+        robot.move(-V,-V,-V,-V)
+        time.sleep(0.001)
+    robot.contol_pami(1)
+    break"""
+
+
+def get_orientation(i):
+        ori=str(i)
+        if ori == 'None':
+            return None
+        else:
+            return i/100
+        
+print(get_orientation(None))
