@@ -25,12 +25,12 @@ class Vendangeuse():
         self.WHEEL_RADIUS = 0.0325  # Rayon des roues en mètres
         self.WHEEL_BASE = 0.21 # Distance entre les roues en mètres
         self.WHEEL_CIR= 2*np.pi*self.WHEEL_RADIUS
-
         self.ser = serial.Serial("/dev/ttyAMA0", 115200)
         self.ser.flushInput()
-
+        
         #VAR 
-        self.orientation_h = 0
+        self.orientation_h = None
+        self.SPEED=2
 
 
 
@@ -44,7 +44,9 @@ class Vendangeuse():
         GPIO.setup(self.START, GPIO.IN)
         self.control_magnet(0) # on desactive l'aimant
         self.show_score(0) # on affiche un score de 0 
-        self.orientation_h=self.get_orientation(8)
+        while self.orientation_h==None:
+            self.orientation_h=self.get_orientation()
+            time.sleep(0.1)
 
 
     def cam_data(self):
@@ -64,7 +66,7 @@ class Vendangeuse():
         # Get receive buffer character
         count = self.ser.inWaiting()
         if count != 0:
-            recv = list(self.read(count))
+            recv = list(self.ser.read(count))
             recv = str(bytes(recv), encoding='UTF-8')
             if( recv.find("{") != -1 and recv.find("}#") != -1 ):
                 #print(recv)
@@ -75,7 +77,10 @@ class Vendangeuse():
     def get_board_info(self, i):
         self.ROBOT.BoardData_Get(i)  # Get voltage data
         data=self.Attitude_update()
-        return data[i]
+        if type(data) ==str:
+            return data.strip('{|}#').split(':')[-1]
+        else:
+            return None
 
     def control_magnet(self,activate=0):
         """
@@ -92,7 +97,11 @@ class Vendangeuse():
             print(f"Warning: code not valid, must be 1 or 0 not {activate}")
 
     def get_orientation(self):
-        return self.get_board_info(8)/100
+        try:
+            return self.get_board_info(8)/100
+        except TypeError:
+            return None
+        
     
     def show_score(self, score):
         # Initialize the I2C interface
@@ -114,24 +123,30 @@ class Vendangeuse():
         """
         fonction qui lance le jeux de 100sec
         """
-        start = 0
-        while not start:
+        start = 1
+        while start:
             start = GPIO.input(self.START)
-        return start
+        return not start
 
     def move(self, HG,BG, HD,BD):
         self.ROBOT.Speed_Wheel_control(HD,BD,BG,HG)
     
     def choose_move(self, distance,orientation):
         # 180-0
-        orientation = self.get_orientation() - self.orientation_h
+        orientation=np.rad2deg(orientation)
+        new_orientation =orientation + self.orientation_h
+        if new_orientation-(90+self.orientation_h) < 0:
+            Rcoef=-1
+            Lcoef=1
+        else:
+            Rcoef=1
+            Lcoef=-1
 
+
+        while (self.get_orientation() < new_orientation+5) and ((self.get_orientation() > new_orientation+5)):
+            self.move( Lcoef*self.SPEED, Lcoef*self.SPEED, Rcoef*self.SPEED, Rcoef*self.SPEED)
+
+        
 
     def close_connection(self):
         del self.ROBOT
-
-
-
-
-
-        
