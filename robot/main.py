@@ -1,15 +1,14 @@
-from camera.main_camera import is_colision
-import RPi.GPIO as GPIO
-import time
-from luma.core.interface.serial import i2c
+#from camera.main_camera import is_colision
+#import RPi.GPIO as GPIO
+"""from luma.core.interface.serial import i2c
 from luma.core.render import canvas
-from luma.oled.device import ssd1306, sh1106
+from luma.oled.device import ssd1306, sh1106"""
 import time
 from PIL import ImageFont
-from Raspblock import Raspblock
+#from Raspblock import Raspblock
 import numpy as np
 import string
-import serial
+#import serial
 
 
 class Vendangeuse():
@@ -97,10 +96,11 @@ class Vendangeuse():
             print(f"Warning: code not valid, must be 1 or 0 not {activate}")
 
     def get_orientation(self):
-        try:
-            return self.get_board_info(8)/100
-        except TypeError:
+        ori=self.get_board_info(8)
+        if ori == 'None':
             return None
+        else:
+            return self.get_board_info(8)/100
         
     
     def show_score(self, score):
