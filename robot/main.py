@@ -146,7 +146,14 @@ class Vendangeuse():
         while (self.get_orientation() < new_orientation+5) and ((self.get_orientation() > new_orientation+5)):
             self.move( Lcoef*self.SPEED, Lcoef*self.SPEED, Rcoef*self.SPEED, Rcoef*self.SPEED)
 
-        
-
     def close_connection(self):
         del self.ROBOT
+
+    
+    def show_flag(self):
+        V = 2*self.SPEED
+        self.move(-V,-V,-V,-V)
+        time.sleep(5)
+        self.move(V,V,V,V)
+        time.sleep(5)
+        
