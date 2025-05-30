@@ -19,6 +19,7 @@ class Vendangeuse():
         self.MAGNET=19
         self.START=13
         self.PAMI=6
+        self.COL = 5
 
         # robot
         self.ROBOT=Raspblock()
@@ -106,7 +107,8 @@ class Vendangeuse():
         else:
             print(f"Warning: code not valid, must be 1 or 0 not {activate}")
     
-
+    def proximity(self):
+        return not GPIO.input(self.COL)
 
     def get_orientation(self):
         ori=self.get_board_info(8)
@@ -165,27 +167,30 @@ class Vendangeuse():
 
 
 
-"""robot = Vendangeuse()
+robot = Vendangeuse()
 V=2
 
 start = robot.on_start()
 print("start")
-while time.time()-start<100:
+while True:
+    print("recule")
     for i in range(5000):
+        while robot.proximity():
+            pass
         robot.move(V,V,V,V)
         time.sleep(0.001)
+    print("avance et depose la banière")
     for i in range(5000):
+        while robot.proximity():
+            pass
         robot.move(-V,-V,-V,-V)
         time.sleep(0.001)
+    print("attend", time.time()-start)
+    while time.time()-start<85:
+        print("attend", time.time()-start)
+        time.sleep(1)
+    print("start pami")
     robot.contol_pami(1)
-    break"""
+    break
+    
 
-
-def get_orientation(i):
-        ori=str(i)
-        if ori == 'None':
-            return None
-        else:
-            return i/100
-        
-print(get_orientation(None))

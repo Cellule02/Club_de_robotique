@@ -1,0 +1,23 @@
+
+Vin = 5V
+Vout=3.3V
+
+R1=?
+R2=?
+
+Vout = Vin*((R1*R2)/(R1+R2))
+
+Vout/Vin = (R1*R2)/(R1+R2)
+
+(R1*R2)/R1+R2) = 0.66
+
+
+0.66=x/n
+x=0.66*n
+
+on pose n=3
+
+x=1.98 kohm
+
+R1=2kohm
+Ré=1kohm
